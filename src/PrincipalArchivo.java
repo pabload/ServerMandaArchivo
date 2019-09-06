@@ -15,34 +15,60 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class PrincipalArchivo {
 
     public static void main(String[] args) throws IOException {
-        ServerSocket sockeServer = new ServerSocket(2500);
-        Socket socket = sockeServer.accept();
-        DataInputStream in = null;
-        FileInputStream fis = null;
-        BufferedInputStream bis = null;
-        OutputStream os = null;
-        BufferedReader lector = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        PrintWriter escritor = new PrintWriter(socket.getOutputStream(), true);
-        String entrada;
-        String salida;
-        String ruta = lector.readLine();
-        System.out.println("ruta de tu carpeta servidor");
-        //String lector.readLine()
-        File direcion = new File(ruta);
-        if (direcion.exists()) {
-            System.out.println("existe");
-
-            do {
+        
+         iniciarServidor(args[0]);
+    }
+    public static void iniciarServidor(String puerto){
+        try {
+           crearServidor(Integer.parseInt(puerto));
+        } catch (Exception e) {
+            System.out.println("erro al iniciar el servidor " + e);
+        }
+        
+    }
+    public static void crearServidor(int puerto){
+        try { 
+            ServerSocket sockeServer = new ServerSocket(puerto);
+            ConfigurarServidor(sockeServer);
+            
+        } catch (IOException ex) {
+            System.out.println("Error al crear socket servidor "+ex);
+        }
+    }
+    public  static void ConfigurarServidor(ServerSocket sockeServer){
+        String entrada = null;
+         do {
+             BufferedReader lector = null;
+             PrintWriter escritor = null;
+             Socket socket =null;
+             try {
+              socket = sockeServer.accept();
+             lector = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+             escritor = new PrintWriter(socket.getOutputStream(), true);
+             } catch (IOException ex) {
+                System.out.println("Error al crear socket "+ex);
+             }
+            DataInputStream in = null;
+            FileInputStream fis = null;
+            BufferedInputStream bis = null;
+            OutputStream os = null;
+            try {
                 entrada = lector.readLine();
+            } catch (IOException ex) {
+                System.out.println("Error al leer ruta del archivo"+ex);
+            }
+            System.out.println(entrada);
+            if (entrada != null) {
                 File archivo = new File(entrada);
-                System.out.println(archivo);
-                //escritor.println("xd");
+                System.out.println("entro");
                 if (archivo.exists()) {
-                    String cadena;
+                    try {
                     System.out.println(entrada);
                     int longitud = (int) new File(entrada).length();
                     escritor.println(longitud);
@@ -52,25 +78,29 @@ public class PrincipalArchivo {
                     bis.read(mybytearray, 0, mybytearray.length);
                     os = socket.getOutputStream();
                     System.out.println("enviando " + entrada + "(" + mybytearray.length + " bytes)");
-                    //escritor.print(longitud);
                     os.write(mybytearray, 0, mybytearray.length);
                     os.flush();
                     System.out.println("ya.");
+                    } catch (IOException ex) {
+                      System.out.println("Error al mandar archivo"+ex);
+                    }
                 } else {
                     escritor.println("non");
                 }
                 if (entrada.equalsIgnoreCase("fin")) {
-                    System.out.println("me voy");
+                    try {
+                     System.out.println("me voy");
                     escritor.println("fin");
                     socket.close();
                     sockeServer.close();
                     System.exit(0);
+                    } catch (IOException ex) {
+                        System.out.println("Erro al cerrar sockets"+ ex);
+                    }
                 }
+            }
 
-            } while (!entrada.equalsIgnoreCase("fin"));
-        } else {
-            System.out.println("no existe");
-        }
+        } while (!entrada.equalsIgnoreCase("fin"));
     }
 
 }
